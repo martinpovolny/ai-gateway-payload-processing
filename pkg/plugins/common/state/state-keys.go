@@ -30,9 +30,11 @@ const (
 	PathKey           = "path"
 
 	// Metering CycleState keys
-	MeteringUsernameKey     = "metering-username"
-	MeteringGroupKey        = "metering-group"
-	MeteringSubscriptionKey = "metering-subscription"
-	MeteringModelKey        = "metering-model"
-	MeteringRequestTimeKey  = "metering-request-time"
+	MeteringUsernameKey       = "metering-username"
+	MeteringGroupKey          = "metering-group"
+	MeteringSubscriptionKey   = "metering-subscription"
+	MeteringModelKey          = "metering-model"
+	MeteringRequestTimeKey    = "metering-request-time"
+	MeteringOrganizationIDKey = "metering-organization-id"
+	MeteringCostCenterKey     = "metering-cost-center"
 )

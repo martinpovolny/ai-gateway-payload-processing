@@ -110,7 +110,7 @@ func (b *meteringBase) processRequest(ctx context.Context, cycleState *plugin.Cy
 
 	// Read identity from maas-headers CycleState (set by maas-headers-guard plugin).
 	// Falls back to reading directly from request headers for backward compatibility.
-	var username, group, subscription string
+	var username, group, subscription, organizationID, costCenter string
 	if maasHeaders, err := plugin.ReadCycleStateKey[map[string]string](cycleState, "maas-headers"); err == nil {
 		username = maasHeaders["x-maas-username"]
 		if username == "" {
@@ -123,6 +123,14 @@ func (b *meteringBase) processRequest(ctx context.Context, cycleState *plugin.Cy
 		subscription = maasHeaders["x-maas-subscription"]
 		if subscription == "" {
 			subscription = maasHeaders["X-MaaS-Subscription"]
+		}
+		organizationID = maasHeaders["x-maas-organization-id"]
+		if organizationID == "" {
+			organizationID = maasHeaders["X-MaaS-Organization-Id"]
+		}
+		costCenter = maasHeaders["x-maas-cost-center"]
+		if costCenter == "" {
+			costCenter = maasHeaders["X-MaaS-Cost-Center"]
 		}
 	}
 	if username == "" {
@@ -146,11 +154,20 @@ func (b *meteringBase) processRequest(ctx context.Context, cycleState *plugin.Cy
 		group = subscription
 	}
 
+	if organizationID == "" {
+		organizationID = request.Headers["x-maas-organization-id"]
+	}
+	if costCenter == "" {
+		costCenter = request.Headers["x-maas-cost-center"]
+	}
+
 	model, _ := request.Body["model"].(string)
 
 	cycleState.Write(state.MeteringUsernameKey, username)
 	cycleState.Write(state.MeteringGroupKey, group)
 	cycleState.Write(state.MeteringSubscriptionKey, subscription)
+	cycleState.Write(state.MeteringOrganizationIDKey, organizationID)
+	cycleState.Write(state.MeteringCostCenterKey, costCenter)
 	cycleState.Write(state.MeteringModelKey, model)
 	cycleState.Write(state.MeteringRequestTimeKey, time.Now())
 
@@ -191,6 +208,8 @@ func (b *meteringBase) reportUsageEvent(ctx context.Context, cycleState *plugin.
 	username, _ := plugin.ReadCycleStateKey[string](cycleState, state.MeteringUsernameKey)
 	group, _ := plugin.ReadCycleStateKey[string](cycleState, state.MeteringGroupKey)
 	subscription, _ := plugin.ReadCycleStateKey[string](cycleState, state.MeteringSubscriptionKey)
+	organizationID, _ := plugin.ReadCycleStateKey[string](cycleState, state.MeteringOrganizationIDKey)
+	costCenter, _ := plugin.ReadCycleStateKey[string](cycleState, state.MeteringCostCenterKey)
 	model, _ := plugin.ReadCycleStateKey[string](cycleState, state.MeteringModelKey)
 	provider, _ := plugin.ReadCycleStateKey[string](cycleState, state.ProviderKey)
 
@@ -232,6 +251,8 @@ func (b *meteringBase) reportUsageEvent(ctx context.Context, cycleState *plugin.
 			"user":                  username,
 			"group":                 group,
 			"subscription":          subscription,
+			"organization_id":       organizationID,
+			"cost_center":           costCenter,
 			"provider":              provider,
 			"model":                 model,
 			"prompt_tokens":         promptTokens,
